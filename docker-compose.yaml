@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-network
+
+  eureka-client:
+    build:
+      context: ./eureka-client
+      dockerfile: Dockerfile
+    ports:
+      - "8081"
+    environment:
+      EUREKA_SERVER_URL: "http://eureka-server:8761/eureka/"
+    depends_on:
+      - eureka-server
+    networks:
+      - microservices-network
+    deploy:
+      replicas: 3
+
+  service-discovery:
+    build:
+      context: ./service-discovery
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    depends_on:
+      - eureka-server
+      - eureka-client
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge

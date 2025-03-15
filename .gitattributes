@@ -1,0 +1,30 @@
+# 🔹 Normalizar finales de línea (CRLF para Windows, LF para Unix/macOS)
+* text=auto
+
+# 🔹 Asegurar que los archivos de código usen LF (evita problemas en Linux/macOS)
+*.java text eol=lf
+*.kt text eol=lf
+*.gradle text eol=lf
+*.sh text eol=lf
+
+# 🔹 Tratar archivos binarios correctamente (sin modificar en Git)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.jar binary
+*.war binary
+*.ear binary
+
+# 🔹 Evitar conflictos en archivos JSON y YAML
+*.json merge=union
+*.yml merge=union
+*.yaml merge=union
+
+# 🔹 Mejor manejo de archivos de configuración
+*.iml text eol=lf
+*.editorconfig text eol=lf
+gi

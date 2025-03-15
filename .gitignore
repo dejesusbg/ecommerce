@@ -1,0 +1,31 @@
+# Ignorar archivos de configuración de IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Ignorar dependencias de Gradle y Maven
+.gradle/
+build/
+target/
+
+# Ignorar archivos generados por Java y Kotlin
+*.class
+*.jar
+*.war
+*.ear
+out/
+
+# Ignorar logs y archivos temporales
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Ignorar archivos de Docker
+.env
+
+# Ignorar configuraciones específicas de los módulos
+**/node_modules/
+**/dist/
+**/venv/
