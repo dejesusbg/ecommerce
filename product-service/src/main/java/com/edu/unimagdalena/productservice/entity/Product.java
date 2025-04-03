@@ -1,4 +1,4 @@
-package com.edu.unimagdalena.inventoryservice.entity;
+package com.edu.unimagdalena.productservice.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -6,27 +6,29 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Builder
 @Data
 @Entity
-@Table(name = "inventory")
+@Table(name = "product")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Inventory {
+public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(unique = true, nullable = false)
-    private String product;
+    private String name;
 
-    @Column(name = "available_quantity", nullable = false)
-    private int availableQuantity;
+    private String description;
 
-    @Column(name = "last_restore_date")
-    private LocalDateTime lastRestockDate;
+    @Column(nullable = false)
+    private Double price;
+
+    @Column(nullable = false)
+    private String category;
+
 }

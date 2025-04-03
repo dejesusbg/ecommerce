@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.edu.unimagdalena'
 version = '0.0.1-SNAPSHOT'
-description = 'Inventory Service'
+description = 'Payment Service'
 
 java {
     toolchain {
