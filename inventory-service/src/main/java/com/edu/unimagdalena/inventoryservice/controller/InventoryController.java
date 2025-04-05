@@ -9,8 +9,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
-import java.net.URL;
 import java.util.UUID;
 
 @RestController
@@ -39,7 +37,8 @@ public class InventoryController {
         ServletUriComponentsBuilder location = ServletUriComponentsBuilder.fromCurrentRequest();
         return inventoryService.createInventory(inventory)
                 .map(createInventory -> ResponseEntity
-                        .created(location.path("/{id}")
+                        .created(
+                                location.path("/{id}")
                                 .buildAndExpand(createInventory.getId())
                                 .toUri())
                         .body(createInventory)

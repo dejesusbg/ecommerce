@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
 
@@ -17,26 +18,40 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Flux<Product> getAllProduct() {
-        return null;
+        return Flux.defer(() -> Flux.fromIterable(productRepository.findAll()))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     @Override
     public Mono<Product> getProductById(UUID id) {
-        return null;
+        return Mono.fromCallable(() -> productRepository.findById(id).orElse(null))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     @Override
     public Mono<Product> createProduct(Product product) {
-        return null;
+        return Mono.fromCallable(() -> productRepository.save(product))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     @Override
     public Mono<Product> updateProduct(UUID id, Product product) {
-        return null;
+        return getProductById(id)
+                .flatMap(existing -> {
+                    product.setId(existing.getId());
+                    return Mono.fromCallable(() -> productRepository.save(product))
+                            .subscribeOn(Schedulers.boundedElastic());
+                });
     }
 
     @Override
     public Mono<Product> deleteProduct(UUID id) {
-        return null;
+        return getProductById(id)
+                .flatMap(existing ->
+                    Mono.fromCallable(() -> {
+                        productRepository.delete(existing);
+                       return existing;
+                    }).subscribeOn(Schedulers.boundedElastic())
+                );
     }
 }
