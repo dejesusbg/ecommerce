@@ -5,6 +5,7 @@ import com.edu.unimagdalena.productservice.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -20,6 +21,7 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
+    @PreAuthorize("hasRole('nuevo-rol')")
     public Flux<ResponseEntity<Product>> getAllProduct() {
         return productService.getAllProduct()
                 .map(ResponseEntity::ok);

@@ -6,11 +6,11 @@ services:
     image: springcloud/eureka
     container_name: eureka-server
     ports:
-      - "8761:8761"
+      - '8761:8761'
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8761/actuator/health']
       interval: 10s
       timeout: 5s
       retries: 3
@@ -23,13 +23,13 @@ services:
       POSTGRES_PASSWORD: 123123
       POSTGRES_USER: postgres
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -38,7 +38,7 @@ services:
     build:
       context: ./product-service
       args:
-        JAR_FILE: "build/libs/product-service-${PRODUCT_VERSION:-0.0.1-SNAPSHOT}.jar"
+        JAR_FILE: 'build/libs/product-service-${PRODUCT_VERSION:-0.0.1-SNAPSHOT}.jar'
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
@@ -46,7 +46,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=123123
     ports:
-      - "8086:8086"
+      - '8086:8086'
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -55,7 +55,7 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8086/actuator/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -64,60 +64,60 @@ services:
     build:
       context: ./payment-service
       args:
-        JAR_FILE: "build/libs/payment-service-${PAYMENT_VERSION:-0.0.1-SNAPSHOT}.jar"
+        JAR_FILE: 'build/libs/payment-service-${PAYMENT_VERSION:-0.0.1-SNAPSHOT}.jar'
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
     ports:
-      - "8085:8085"
+      - '8085:8085'
     depends_on:
       - eureka-server
       - postgres
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8085/actuator/health']
       interval: 30s
 
   order-service:
     build:
       context: ./order-service
       args:
-        JAR_FILE: "build/libs/order-service-${ORDER_VERSION:-0.0.1-SNAPSHOT}.jar"
+        JAR_FILE: 'build/libs/order-service-${ORDER_VERSION:-0.0.1-SNAPSHOT}.jar'
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/order_db
     ports:
-      - "8084:8084"
+      - '8084:8084'
     depends_on:
       - eureka-server
       - postgres
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8084/actuator/health']
       interval: 30s
 
   inventory-service:
     build:
       context: ./inventory-service
       args:
-        JAR_FILE: "build/libs/inventory-service-${INVENTORY_VERSION:-0.0.1-SNAPSHOT}.jar"
+        JAR_FILE: 'build/libs/inventory-service-${INVENTORY_VERSION:-0.0.1-SNAPSHOT}.jar'
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/inventory_db
     ports:
-      - "8083:8083"
+      - '8083:8083'
     depends_on:
       - eureka-server
       - postgres
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8083/actuator/health']
       interval: 30s
 
   # Servicios adicionales que solicitaste
@@ -129,7 +129,7 @@ services:
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
       - SPRING_PROFILES_ACTIVE=docker
     ports:
-      - "8081:8081"
+      - '8081:8081'
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -138,7 +138,7 @@ services:
     deploy:
       replicas: 3
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8081/actuator/health']
       interval: 30s
 
   service-discovery:
@@ -149,15 +149,25 @@ services:
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
       - SPRING_PROFILES_ACTIVE=docker
     ports:
-      - "8090:8090"
+      - '8090:8090'
     depends_on:
       - eureka-server
       - eureka-client
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8090/actuator/health']
       interval: 30s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - '8080:8080'
+    command:
+      - start-dev
 
 networks:
   microservices-network:
