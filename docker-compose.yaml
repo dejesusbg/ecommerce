@@ -3,7 +3,8 @@ version: '3.8'
 services:
   # Servidor Eureka (versión oficial simplificada)
   eureka-server:
-    image: springcloud/eureka
+    build:
+      context: ./eureka-server
     container_name: eureka-server
     ports:
       - '8761:8761'
