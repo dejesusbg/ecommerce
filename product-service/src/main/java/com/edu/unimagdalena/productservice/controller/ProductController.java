@@ -18,7 +18,7 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_MASTER') or hasRole('ROLE_ADMIN')")
     public Flux<ResponseEntity<Product>> getAllProduct() {
         return productService.getAllProduct()
                 .map(ResponseEntity::ok);
