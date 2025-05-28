@@ -99,6 +99,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123123
     ports:
       - '8085:8085'
     depends_on:
@@ -118,6 +120,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/order_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123123
     ports:
       - '8084:8084'
     depends_on:
@@ -137,6 +141,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/inventory_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123123
     ports:
       - '8083:8083'
     depends_on:
