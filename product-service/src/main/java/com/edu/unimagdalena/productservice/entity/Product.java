@@ -4,18 +4,22 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
+
+import java.util.UUID;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Builder
 @Data
+@Entity
+@Table(name = "product")
 @Document(collection = "products")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
 
     @Id
-    private String id; // Changed to String for MongoDB ID
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String name;
 
