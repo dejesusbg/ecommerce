@@ -1,0 +1,46 @@
+global:
+  scrape_interval: 15s # By default, scrape targets every 15 seconds.
+
+scrape_configs:
+  - job_name: 'spring-micrometer'
+    metrics_path: '/actuator/prometheus' # Default path for Spring Boot Actuator Prometheus endpoint
+    scrape_interval: 5s # Override the global default and scrape services every 5 seconds.
+    static_configs:
+      - targets: [
+          'api-gateway:8080',
+          'product-service:8086',
+          'order-service:8084',
+          'payment-service:8085',
+          'inventory-service:8083'
+        ]
+
+  - job_name: 'prometheus' # To monitor Prometheus itself
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'loki' # To monitor Loki itself
+    static_configs:
+      - targets: ['loki:3100']
+
+  - job_name: 'grafana' # To monitor Grafana itself
+    static_configs:
+      - targets: ['grafana:3000'] # Assuming Grafana exposes /metrics, check its documentation
+        # If Grafana doesn't expose /metrics on 3000 directly or requires specific config,
+        # this might need adjustment or removal. For now, included as an example.
+        # Grafana's own metrics are often exposed via a /metrics endpoint on the main port.
+        # However, it's more common to monitor Grafana via its internal metrics or specific exporters if needed.
+        # For simplicity, we'll keep it, but it might not yield Spring Boot style metrics.
+        # A better approach for Grafana internal metrics:
+        # metrics_path: /metrics
+        # scheme: http # if needed
+    # For Grafana, it's common to use its internal metrics endpoint if enabled
+    # Or rely on other monitoring for Grafana itself.
+    # The /metrics endpoint might not be enabled by default or might be on a different path/port.
+    # Removing grafana job for now as it's not standard for all grafana setups and might cause confusion.
+    # If Grafana metrics are needed, refer to Grafana docs for proper setup.
+
+  # Example for monitoring Eureka Server if it exposes Prometheus metrics
+  # - job_name: 'eureka-server'
+  #   metrics_path: '/actuator/prometheus' # Check if Eureka server has this endpoint
+  #   static_configs:
+  #     - targets: ['eureka-server:8761']

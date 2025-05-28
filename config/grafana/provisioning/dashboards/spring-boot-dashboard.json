@@ -1,0 +1,96 @@
+{
+  "uid": "spring-boot-jvm-http",
+  "title": "Spring Boot - JVM & HTTP",
+  "tags": ["spring-boot", "jvm", "http"],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 1,
+  "panels": [
+    {
+      "title": "JVM Memory Used",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(jvm_memory_used_bytes{area='heap', job='spring-micrometer'}) by (application)",
+          "legendFormat": "{{application}} - Heap Used"
+        },
+        {
+          "expr": "sum(jvm_memory_used_bytes{area='nonheap', job='spring-micrometer'}) by (application)",
+          "legendFormat": "{{application}} - Non-Heap Used"
+        }
+      ]
+    },
+    {
+      "title": "JVM Threads",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(jvm_threads_live_threads{job='spring-micrometer'}) by (application)",
+          "legendFormat": "{{application}} - Live Threads"
+        },
+        {
+          "expr": "sum(jvm_threads_daemon_threads{job='spring-micrometer'}) by (application)",
+          "legendFormat": "{{application}} - Daemon Threads"
+        }
+      ]
+    },
+    {
+      "title": "HTTP Server Requests (Rate)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{job='spring-micrometer'}[5m])) by (application, uri, outcome)",
+          "legendFormat": "{{application}} - {{uri}} - {{outcome}}"
+        }
+      ]
+    },
+    {
+      "title": "HTTP Server Requests (Latency - P95)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job='spring-micrometer'}[5m])) by (le, application, uri))",
+          "legendFormat": "{{application}} - {{uri}} - P95 Latency"
+        }
+      ]
+    },
+    {
+      "title": "Log Events (Rate)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "sum(rate(logback_events_total{job='spring-micrometer'}[5m])) by (application, level)",
+          "legendFormat": "{{application}} - {{level}}"
+        }
+      ]
+    },
+    {
+      "title": "Loki Logs",
+      "type": "logs",
+      "datasource": "Loki",
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 24},
+      "targets": [
+        {
+          "expr": "{app=~\"api-gateway|product-service|order-service|payment-service|inventory-service\"}"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    }
+  ],
+  "refresh": "10s"
+}
