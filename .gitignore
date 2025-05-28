@@ -1,4 +1,5 @@
 # Ignorar archivos de configuración de IDEs
+.vscode/
 .idea/
 *.iml
 *.ipr

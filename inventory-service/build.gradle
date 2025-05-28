@@ -21,9 +21,11 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.projectlombok:lombok'
+    implementation 'com.github.loki4j:loki-logback-appender:1.4.1' 
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave' // Micrometer Tracing with Brave
+    implementation 'io.micrometer:micrometer-observation' // Explicitly add for clarity
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.boot:spring-boot-starter-logging'
     compileOnly 'org.projectlombok:lombok'

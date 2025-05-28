@@ -1,15 +1,17 @@
-# Stage 1: Build
-FROM gradle:8.13.0-jdk21-alpine AS builder
+# Stage 1: Build the application
+FROM gradle:8.5-jdk21 AS builder
 WORKDIR /app
-COPY --chown=gradle:gradle . .
-RUN gradle build -x test --parallel --no-daemon
+COPY build.gradle settings.gradle gradlew ./
+COPY gradle ./gradle
+COPY src ./src
+RUN ./gradlew build --no-daemon -x test
 
-# Stage 2: Run
-FROM amazoncorretto:21-alpine-jdk
-RUN addgroup -S spring && adduser -S spring -G spring
+# Stage 2: Create the runtime image
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
-USER spring:spring
-ARG JAR_FILE=build/libs/*.jar
-COPY --from=builder --chown=spring:spring /app/${JAR_FILE} app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app.jar", "--spring.profiles.active=docker"]
+RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
+USER appuser
+COPY --from=builder /app/build/libs/*-SNAPSHOT.jar app.jar
+EXPOSE 8084 # Order service runs on 8084
+ENTRYPOINT ["java", "-jar", "app.jar"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -f http://localhost:8084/actuator/health || exit 1
