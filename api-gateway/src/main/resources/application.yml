@@ -1,0 +1,106 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # Enables route creation based on service discovery
+          lower-case-service-id: true # Converts service IDs to lowercase for route paths
+      default-filters: # Apply to all routes
+        - name: Retry
+          args:
+            retries: 3
+            statuses:
+              - BAD_GATEWAY
+              - SERVICE_UNAVAILABLE
+              - GATEWAY_TIMEOUT
+            methods:
+              - GET
+            backoff:
+              firstBackoff: 10ms
+              maxBackoff: 50ms
+              factor: 2
+              basedOnPreviousValue: false
+        - name: CircuitBreaker
+          args:
+            name: defaultCircuitBreaker
+            fallbackUri: forward:/fallback/default # Enabled fallback
+      routes:
+        - id: product-service-route
+          uri: lb://product-service # Use service ID registered with Eureka
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - RewritePath=/api/products/(?<segment>.*), /$\{segment}
+
+        - id: order-service-route
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - RewritePath=/api/orders/(?<segment>.*), /$\{segment}
+
+        - id: payment-service-route
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - RewritePath=/api/payments/(?<segment>.*), /$\{segment}
+
+        - id: inventory-service-route
+          uri: lb://inventory-service
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - RewritePath=/api/inventory/(?<segment>.*), /$\{segment}
+
+server:
+  port: 8080 # Standard port for API Gateway
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/} # Get Eureka URL from env or default
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,configprops,env,loggers
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# Resilience4J specific configurations
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5 # Lowered for easier testing
+        permittedNumberOfCallsInHalfOpenState: 3
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5000 # 5s
+        # slowCallRateThreshold: 100 
+        # slowCallDurationThreshold: 2000 
+    instances:
+      defaultCircuitBreaker: # Corresponds to the name used in the filter
+        baseConfig: default
+      # Example per-service instance (can be defined if needed later)
+      # productServiceCircuitBreaker:
+      #   baseConfig: default
+      #   failureRateThreshold: 60
+  # Optional: Configure TimeLimiter if calls are taking too long
+  # timelimiter:
+  #   configs:
+  #     default:
+  #       timeoutDuration: 2s # Example: 2 seconds
+  #   instances:
+  #     defaultTimeLimiter:
+  #       baseConfig: default
