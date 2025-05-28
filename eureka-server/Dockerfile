@@ -6,6 +6,8 @@ RUN gradle build -x test --no-daemon
 
 # Stage 2: Run
 FROM amazoncorretto:21-alpine-jdk
+USER root
+RUN apk add --no-cache curl
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 ARG JAR_FILE=build/libs/*.jar
