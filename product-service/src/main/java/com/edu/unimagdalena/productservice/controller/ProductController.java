@@ -3,6 +3,9 @@ package com.edu.unimagdalena.productservice.controller;
 import com.edu.unimagdalena.productservice.entity.Product;
 import com.edu.unimagdalena.productservice.service.ProductService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +28,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<Product>> getProductoById(@PathVariable String id) { // Changed UUID to String
+    public Mono<ResponseEntity<Product>> getProductoById(@PathVariable UUID id) { // Changed UUID to String
         return productService.getProductById(id)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
@@ -44,17 +47,17 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public Mono<ResponseEntity<Product>> updateProduct(@PathVariable String id, @RequestBody Product product) { // Changed
-                                                                                                                // UUID
-                                                                                                                // to
-                                                                                                                // String
+    public Mono<ResponseEntity<Product>> updateProduct(@PathVariable UUID id, @RequestBody Product product) { // Changed
+                                                                                                              // UUID
+                                                                                                              // to
+                                                                                                              // String
         return productService.updateProduct(id, product)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<Product>> deleteProduct(@PathVariable String id) { // Changed UUID to String
+    public Mono<ResponseEntity<Product>> deleteProduct(@PathVariable UUID id) { // Changed UUID to String
         return productService.deleteProduct(id)
                 .map(deletedProduct -> ResponseEntity.status(HttpStatus.OK).body(deletedProduct)) // Ensure deleted
                                                                                                   // product is returned

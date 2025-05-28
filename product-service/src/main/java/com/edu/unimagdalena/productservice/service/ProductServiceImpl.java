@@ -3,6 +3,9 @@ package com.edu.unimagdalena.productservice.service;
 import com.edu.unimagdalena.productservice.entity.Product;
 import com.edu.unimagdalena.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+
+import java.util.UUID;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -25,7 +28,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Cacheable(value = PRODUCT_CACHE_KEY, key = "#id")
-    public Mono<Product> getProductById(String id) {
+    public Mono<Product> getProductById(UUID id) {
         return productRepository.findById(id);
     }
 
@@ -37,7 +40,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @CacheEvict(value = PRODUCT_CACHE_KEY, key = "#id")
-    public Mono<Product> updateProduct(String id, Product product) {
+    public Mono<Product> updateProduct(UUID id, Product product) {
         return productRepository.findById(id)
                 .flatMap(existingProduct -> {
                     existingProduct.setName(product.getName());
@@ -50,7 +53,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @CacheEvict(value = PRODUCT_CACHE_KEY, key = "#id")
-    public Mono<Product> deleteProduct(String id) {
+    public Mono<Product> deleteProduct(UUID id) {
         return productRepository.findById(id)
                 .flatMap(existingProduct -> productRepository.delete(existingProduct).then(Mono.just(existingProduct)));
     }

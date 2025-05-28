@@ -15,8 +15,9 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+
+import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
 public class ProductServiceImplTests {
@@ -25,7 +26,8 @@ public class ProductServiceImplTests {
     private ProductRepository productRepository;
 
     @Mock
-    private ReactiveRedisTemplate<String, Product> redisTemplate; // Mocking Redis template, actual caching tests are in integration
+    private ReactiveRedisTemplate<String, Product> redisTemplate; // Mocking Redis template, actual caching tests are in
+                                                                  // integration
 
     @InjectMocks
     private ProductServiceImpl productService;
@@ -35,8 +37,10 @@ public class ProductServiceImplTests {
 
     @BeforeEach
     void setUp() {
-        product1 = Product.builder().id("1").name("Laptop Pro").description("High-performance laptop").price(1200.00).category("Electronics").build();
-        product2 = Product.builder().id("2").name("Smartphone X").description("Latest model smartphone").price(800.00).category("Electronics").build();
+        product1 = Product.builder().id(UUID.randomUUID()).name("Laptop Pro").description("High-performance laptop")
+                .price(1200.00).category("Electronics").build();
+        product2 = Product.builder().id(UUID.randomUUID()).name("Smartphone X").description("Latest model smartphone")
+                .price(800.00).category("Electronics").build();
     }
 
     @Test
@@ -44,32 +48,32 @@ public class ProductServiceImplTests {
         when(productRepository.findAll()).thenReturn(Flux.just(product1, product2));
 
         StepVerifier.create(productService.getAllProduct())
-            .expectNext(product1)
-            .expectNext(product2)
-            .verifyComplete();
+                .expectNext(product1)
+                .expectNext(product2)
+                .verifyComplete();
 
         verify(productRepository, times(1)).findAll();
     }
 
     @Test
     void getProductById_shouldReturnProduct_whenFound() {
-        when(productRepository.findById(anyString())).thenReturn(Mono.just(product1));
+        when(productRepository.findById(any(UUID.class))).thenReturn(Mono.just(product1));
 
-        StepVerifier.create(productService.getProductById("1"))
-            .expectNext(product1)
-            .verifyComplete();
+        StepVerifier.create(productService.getProductById(product1.getId()))
+                .expectNext(product1)
+                .verifyComplete();
 
-        verify(productRepository, times(1)).findById("1");
+        verify(productRepository, times(1)).findById(product1.getId());
     }
 
     @Test
     void getProductById_shouldReturnEmpty_whenNotFound() {
-        when(productRepository.findById(anyString())).thenReturn(Mono.empty());
+        when(productRepository.findById(any(UUID.class))).thenReturn(Mono.empty());
 
-        StepVerifier.create(productService.getProductById("3"))
-            .verifyComplete();
+        StepVerifier.create(productService.getProductById(UUID.randomUUID()))
+                .verifyComplete();
 
-        verify(productRepository, times(1)).findById("3");
+        verify(productRepository, times(1)).findById(any(UUID.class));
     }
 
     @Test
@@ -77,60 +81,64 @@ public class ProductServiceImplTests {
         when(productRepository.save(any(Product.class))).thenReturn(Mono.just(product1));
 
         StepVerifier.create(productService.createProduct(product1))
-            .expectNext(product1)
-            .verifyComplete();
+                .expectNext(product1)
+                .verifyComplete();
 
         verify(productRepository, times(1)).save(product1);
     }
 
     @Test
     void updateProduct_shouldUpdateAndReturnProduct_whenFound() {
-        Product updatedProduct = Product.builder().id("1").name("Laptop Pro X").description("Updated laptop").price(1250.00).category("Electronics").build();
-        when(productRepository.findById("1")).thenReturn(Mono.just(product1));
+        Product updatedProduct = Product.builder().id(product1.getId()).name("Laptop Pro X")
+                .description("Updated laptop")
+                .price(1250.00).category("Electronics").build();
+        when(productRepository.findById(product1.getId())).thenReturn(Mono.just(product1));
         when(productRepository.save(any(Product.class))).thenReturn(Mono.just(updatedProduct));
 
-        StepVerifier.create(productService.updateProduct("1", updatedProduct))
-            .expectNextMatches(p -> p.getName().equals("Laptop Pro X") && p.getPrice() == 1250.00)
-            .verifyComplete();
+        StepVerifier.create(productService.updateProduct(product1.getId(), updatedProduct))
+                .expectNextMatches(p -> p.getName().equals("Laptop Pro X") && p.getPrice() == 1250.00)
+                .verifyComplete();
 
-        verify(productRepository, times(1)).findById("1");
+        verify(productRepository, times(1)).findById(product1.getId());
         verify(productRepository, times(1)).save(any(Product.class)); // Verifies existingProduct was updated and saved
     }
-    
+
     @Test
     void updateProduct_shouldReturnEmpty_whenNotFound() {
-        Product updatedProduct = Product.builder().id("3").name("Laptop Pro X").description("Updated laptop").price(1250.00).category("Electronics").build();
-        when(productRepository.findById("3")).thenReturn(Mono.empty());
+        UUID nonExistentId = UUID.randomUUID();
+        Product updatedProduct = Product.builder().id(nonExistentId).name("Laptop Pro X").description("Updated laptop")
+                .price(1250.00).category("Electronics").build();
+        when(productRepository.findById(nonExistentId)).thenReturn(Mono.empty());
 
-        StepVerifier.create(productService.updateProduct("3", updatedProduct))
-            .verifyComplete();
+        StepVerifier.create(productService.updateProduct(nonExistentId, updatedProduct))
+                .verifyComplete();
 
-        verify(productRepository, times(1)).findById("3");
+        verify(productRepository, times(1)).findById(nonExistentId);
         verify(productRepository, never()).save(any(Product.class));
     }
 
-
     @Test
     void deleteProduct_shouldDeleteProduct_whenFound() {
-        when(productRepository.findById("1")).thenReturn(Mono.just(product1));
+        when(productRepository.findById(product1.getId())).thenReturn(Mono.just(product1));
         when(productRepository.delete(any(Product.class))).thenReturn(Mono.empty()); // delete returns Mono<Void>
 
-        StepVerifier.create(productService.deleteProduct("1"))
-            .expectNext(product1) // The service returns the product that was deleted
-            .verifyComplete();
+        StepVerifier.create(productService.deleteProduct(product1.getId()))
+                .expectNext(product1) // The service returns the product that was deleted
+                .verifyComplete();
 
-        verify(productRepository, times(1)).findById("1");
+        verify(productRepository, times(1)).findById(product1.getId());
         verify(productRepository, times(1)).delete(product1);
     }
-    
+
     @Test
     void deleteProduct_shouldReturnEmpty_whenNotFound() {
-        when(productRepository.findById("3")).thenReturn(Mono.empty());
+        UUID nonExistentId = UUID.randomUUID();
+        when(productRepository.findById(nonExistentId)).thenReturn(Mono.empty());
 
-        StepVerifier.create(productService.deleteProduct("3"))
-            .verifyComplete();
+        StepVerifier.create(productService.deleteProduct(nonExistentId))
+                .verifyComplete();
 
-        verify(productRepository, times(1)).findById("3");
+        verify(productRepository, times(1)).findById(nonExistentId);
         verify(productRepository, never()).delete(any(Product.class));
     }
 }
