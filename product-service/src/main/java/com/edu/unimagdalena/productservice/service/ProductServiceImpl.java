@@ -3,12 +3,11 @@ package com.edu.unimagdalena.productservice.service;
 import com.edu.unimagdalena.productservice.entity.Product;
 import com.edu.unimagdalena.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -16,42 +15,43 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
 
+    public static final String PRODUCT_CACHE_KEY = "Product";
+
     @Override
+    @Cacheable(value = PRODUCT_CACHE_KEY, key = "'all'")
     public Flux<Product> getAllProduct() {
-        return Flux.defer(() -> Flux.fromIterable(productRepository.findAll()))
-                .subscribeOn(Schedulers.boundedElastic());
+        return productRepository.findAll();
     }
 
     @Override
-    public Mono<Product> getProductById(UUID id) {
-        return Mono.fromCallable(() -> productRepository.findById(id).orElse(null))
-                .subscribeOn(Schedulers.boundedElastic());
+    @Cacheable(value = PRODUCT_CACHE_KEY, key = "#id")
+    public Mono<Product> getProductById(String id) {
+        return productRepository.findById(id);
     }
 
     @Override
+    @CacheEvict(value = PRODUCT_CACHE_KEY, allEntries = true)
     public Mono<Product> createProduct(Product product) {
-        return Mono.fromCallable(() -> productRepository.save(product))
-                .subscribeOn(Schedulers.boundedElastic());
+        return productRepository.save(product);
     }
 
     @Override
-    public Mono<Product> updateProduct(UUID id, Product product) {
-        return getProductById(id)
-                .flatMap(existing -> {
-                    product.setId(existing.getId());
-                    return Mono.fromCallable(() -> productRepository.save(product))
-                            .subscribeOn(Schedulers.boundedElastic());
+    @CacheEvict(value = PRODUCT_CACHE_KEY, key = "#id")
+    public Mono<Product> updateProduct(String id, Product product) {
+        return productRepository.findById(id)
+                .flatMap(existingProduct -> {
+                    existingProduct.setName(product.getName());
+                    existingProduct.setDescription(product.getDescription());
+                    existingProduct.setPrice(product.getPrice());
+                    existingProduct.setCategory(product.getCategory());
+                    return productRepository.save(existingProduct);
                 });
     }
 
     @Override
-    public Mono<Product> deleteProduct(UUID id) {
-        return getProductById(id)
-                .flatMap(existing ->
-                    Mono.fromCallable(() -> {
-                        productRepository.delete(existing);
-                       return existing;
-                    }).subscribeOn(Schedulers.boundedElastic())
-                );
+    @CacheEvict(value = PRODUCT_CACHE_KEY, key = "#id")
+    public Mono<Product> deleteProduct(String id) {
+        return productRepository.findById(id)
+                .flatMap(existingProduct -> productRepository.delete(existingProduct).then(Mono.just(existingProduct)));
     }
 }

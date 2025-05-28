@@ -20,25 +20,38 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.projectlombok:lombok'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'com.github.loki4j:loki-logback-appender:1.4.1' 
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave' // Micrometer Tracing with Brave
+    implementation 'io.micrometer:micrometer-observation' // Explicitly add for clarity
     implementation 'org.springframework.boot:spring-boot-starter-logging'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    runtimeOnly 'org.postgresql:postgresql'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'io.projectreactor:reactor-test'
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.0.0'
-    testImplementation 'org.assertj:assertj-core:3.23.1'
-    testImplementation 'io.rest-assured:spring-mock-mvc'
-    testImplementation 'org.testcontainers:junit-jupiter:1.18.0'
-    testImplementation 'org.testcontainers:postgresql:1.18.0'
-    testImplementation 'org.mockito:mockito-inline:4.8.0'
-    testImplementation 'com.h2database:h2'
+    testImplementation 'io.projectreactor:reactor-test' // For testing reactive types
+    testImplementation 'org.mockito:mockito-core' 
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.assertj:assertj-core' // Already present, but good to confirm
+
+    // For embedded MongoDB for integration tests
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring3x:4.11.0'
+    // For embedded Redis for integration tests
+    testImplementation 'it.ozimov:embedded-redis:0.7.3'
+    // Ensure embedded-redis doesn't bring in an old Jedis if Spring Data Redis uses Lettuce
+    // configurations {
+    //     testImplementation.exclude group: 'redis.clients', module: 'jedis'
+    // }
+
+    // Testcontainers (dependencies kept in case other pre-existing tests use them, though primary approach is embedded)
+    testImplementation 'org.testcontainers:junit-jupiter:1.18.0' 
+    testImplementation 'org.testcontainers:mongodb:1.18.0'
+    // testImplementation 'org.testcontainers:redis:1.18.0' // Testcontainers for Redis if needed
+
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
      implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-security'

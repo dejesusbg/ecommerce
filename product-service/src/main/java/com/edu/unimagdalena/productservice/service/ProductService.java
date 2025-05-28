@@ -4,12 +4,10 @@ import com.edu.unimagdalena.productservice.entity.Product;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 public interface ProductService {
     Flux<Product> getAllProduct();
-    Mono<Product> getProductById(UUID id);
+    Mono<Product> getProductById(String id); // Changed UUID to String
     Mono<Product> createProduct(Product product);
-    Mono<Product> updateProduct(UUID id, Product product);
-    Mono<Product> deleteProduct(UUID id);
+    Mono<Product> updateProduct(String id, Product product); // Changed UUID to String
+    Mono<Product> deleteProduct(String id); // Changed UUID to String
 }
