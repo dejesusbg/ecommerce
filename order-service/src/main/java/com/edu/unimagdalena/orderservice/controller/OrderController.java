@@ -5,8 +5,8 @@ import com.edu.unimagdalena.orderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -33,14 +33,17 @@ public class OrderController {
         }
 
         @PostMapping
-        public Mono<ResponseEntity<Order>> createOrder(@RequestBody Order order) {
-                ServletUriComponentsBuilder location = ServletUriComponentsBuilder.fromCurrentRequest();
+        public Mono<ResponseEntity<Order>> createOrder(
+                        @RequestBody Order order,
+                        ServerHttpRequest request) {
+
                 return orderService.createOrder(order)
-                                .map(createdOrder -> ResponseEntity
-                                                .created(location.path("/{id}")
-                                                                .buildAndExpand(createdOrder.getId())
-                                                                .toUri())
-                                                .body(createdOrder));
+                                .map(created -> {
+                                        String location = request.getURI().toString() + "/" + created.getId();
+                                        return ResponseEntity
+                                                        .created(java.net.URI.create(location))
+                                                        .body(created);
+                                });
         }
 
         @PutMapping("/{id}")

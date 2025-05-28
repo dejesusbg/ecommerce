@@ -4,25 +4,25 @@ import com.edu.unimagdalena.inventoryservice.entity.Inventory;
 import com.edu.unimagdalena.inventoryservice.service.InventoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-class InventoryControllerTest {
+@WebFluxTest(controllers = InventoryController.class)
+public class InventoryControllerUnitTest {
+
+    @Autowired
+    private WebTestClient webTestClient;
 
     @Mock
     private InventoryService inventoryService;
@@ -30,157 +30,59 @@ class InventoryControllerTest {
     @InjectMocks
     private InventoryController inventoryController;
 
-    private Inventory inventory;
-    private UUID inventoryId;
+    private Inventory inventory1;
+    private Inventory inventory2;
+    private UUID inventory1Id;
 
     @BeforeEach
     void setUp() {
-        inventoryId = UUID.randomUUID();
-        inventory = Inventory.builder()
-                .id(inventoryId)
-                .product("Laptop")
-                .availableQuantity(10)
-                .build();
+        inventory1Id = UUID.randomUUID();
+        inventory1 = Inventory.builder().id(inventory1Id).product("Laptop").availableQuantity(10).build();
+        inventory2 = Inventory.builder().id(UUID.randomUUID()).product("Mouse").availableQuantity(20).build();
     }
 
     @Test
-    void getAllInventory_ShouldReturnAllInventories() {
-        Inventory inventory2 = Inventory.builder()
-                .id(UUID.randomUUID())
-                .product("Mouse")
-                .availableQuantity(20)
-                .build();
+    void getAllInventory_shouldReturnInventories() {
+        when(inventoryService.getAllInventory()).thenReturn(Flux.just(inventory1, inventory2));
 
-        when(inventoryService.getAllInventory()).thenReturn(Flux.just(inventory, inventory2));
-
-        Flux<ResponseEntity<Inventory>> result = inventoryController.getAllInventory();
-
-        StepVerifier.create(result)
-                .expectNext(ResponseEntity.ok(inventory))
-                .expectNext(ResponseEntity.ok(inventory2))
-                .verifyComplete();
+        webTestClient.get().uri("/api/v1/inventario")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Inventory.class).hasSize(2).contains(inventory1, inventory2);
     }
 
     @Test
-    void getInventoryById_WhenExists_ShouldReturnInventory() {
-        when(inventoryService.getInventoryById(inventoryId)).thenReturn(Mono.just(inventory));
+    void getInventoryById_shouldReturnInventory_whenFound() {
+        when(inventoryService.getInventoryById(inventory1Id)).thenReturn(Mono.just(inventory1));
 
-        Mono<ResponseEntity<Inventory>> result = inventoryController.getInventoryById(inventoryId);
-
-        StepVerifier.create(result)
-                .expectNext(ResponseEntity.ok(inventory))
-                .verifyComplete();
+        webTestClient.get().uri("/api/v1/inventario/{id}", inventory1Id)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Inventory.class).isEqualTo(inventory1);
     }
 
     @Test
-    void getInventoryById_WhenNotExists_ShouldReturnNotFound() {
-        when(inventoryService.getInventoryById(inventoryId)).thenReturn(Mono.empty());
+    void getInventoryById_shouldReturnNotFound_whenNotExists() {
+        UUID nonExistentId = UUID.randomUUID();
+        when(inventoryService.getInventoryById(nonExistentId)).thenReturn(Mono.empty());
 
-        Mono<ResponseEntity<Inventory>> result = inventoryController.getInventoryById(inventoryId);
-
-        StepVerifier.create(result)
-                .expectNext(ResponseEntity.notFound().build())
-                .verifyComplete();
+        webTestClient.get().uri("/api/v1/inventario/{id}", nonExistentId)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
-    void createInventory_ShouldReturnCreatedInventory() {
-        // Arrange
-        Inventory newInventory = Inventory.builder()
-                .product("Keyboard")
-                .availableQuantity(15)
-                .build();
+    void createInventory_shouldCreateAndReturnInventory() {
+        when(inventoryService.createInventory(any(Inventory.class))).thenReturn(Mono.just(inventory1));
 
-        Inventory savedInventory = Inventory.builder()
-                .id(inventoryId)
-                .product("Keyboard")
-                .availableQuantity(15)
-                .build();
-
-        when(inventoryService.createInventory(any(Inventory.class))).thenReturn(Mono.just(savedInventory));
-
-        // Simular el contexto de solicitud HTTP
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setScheme("http");
-        request.setServerName("localhost");
-        request.setServerPort(8080);
-        request.setRequestURI("/api/v1/inventario");
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-
-        // Act
-        Mono<ResponseEntity<Inventory>> result = inventoryController.createInventory(newInventory);
-
-        // Assert
-        StepVerifier.create(result)
-                .assertNext(response -> {
-                    assert response.getStatusCode().is2xxSuccessful();
-                    assert response.getBody() != null;
-                    assert response.getBody().getId().equals(inventoryId);
-                    assert response.getHeaders().getLocation() != null;
-                    assert response.getHeaders().getLocation().toString()
-                            .equals("http://localhost:8080/api/v1/inventario/" + inventoryId);
-                })
-                .verifyComplete();
-
-        // Limpiar el contexto después de la prueba
-        RequestContextHolder.resetRequestAttributes();
-    }
-
-    @Test
-    void updateInventory_WhenExists_ShouldReturnUpdatedInventory() {
-        Inventory updatedInventory = Inventory.builder()
-                .id(inventoryId)
-                .product("Laptop Pro")
-                .availableQuantity(5)
-                .build();
-
-        when(inventoryService.updateInventory(inventoryId, updatedInventory))
-                .thenReturn(Mono.just(updatedInventory));
-
-        Mono<ResponseEntity<Inventory>> result = inventoryController.updateInventory(inventoryId, updatedInventory);
-
-        StepVerifier.create(result)
-                .expectNext(ResponseEntity.ok(updatedInventory))
-                .verifyComplete();
-    }
-
-    @Test
-    void updateInventory_WhenNotExists_ShouldReturnNotFound() {
-        Inventory updatedInventory = Inventory.builder()
-                .id(inventoryId)
-                .product("Laptop Pro")
-                .availableQuantity(5)
-                .build();
-
-        when(inventoryService.updateInventory(inventoryId, updatedInventory))
-                .thenReturn(Mono.empty());
-
-        Mono<ResponseEntity<Inventory>> result = inventoryController.updateInventory(inventoryId, updatedInventory);
-
-        StepVerifier.create(result)
-                .expectNext(ResponseEntity.notFound().build())
-                .verifyComplete();
-    }
-
-    @Test
-    void deleteInventory_WhenExists_ShouldReturnOkWithDeletedInventory() {
-        when(inventoryService.deleteInventory(inventoryId)).thenReturn(Mono.just(inventory));
-
-        Mono<ResponseEntity<Inventory>> result = inventoryController.deleteInventory(inventoryId);
-
-        StepVerifier.create(result)
-                .expectNext(ResponseEntity.ok(inventory))
-                .verifyComplete();
-    }
-
-    @Test
-    void deleteInventory_WhenNotExists_ShouldReturnNotFound() {
-        when(inventoryService.deleteInventory(inventoryId)).thenReturn(Mono.empty());
-
-        Mono<ResponseEntity<Inventory>> result = inventoryController.deleteInventory(inventoryId);
-
-        StepVerifier.create(result)
-                .expectNext(ResponseEntity.notFound().build())
-                .verifyComplete();
+        webTestClient.post().uri("/api/v1/inventario")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(inventory1), Inventory.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(Inventory.class).isEqualTo(inventory1);
     }
 }

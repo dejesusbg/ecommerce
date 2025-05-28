@@ -4,8 +4,8 @@ import com.edu.unimagdalena.inventoryservice.entity.Inventory;
 import com.edu.unimagdalena.inventoryservice.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -16,46 +16,48 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class InventoryController {
 
-    private final InventoryService inventoryService;
+        private final InventoryService inventoryService;
 
-    @GetMapping
-    public Flux<ResponseEntity<Inventory>> getAllInventory() {
-        return inventoryService.getAllInventory()
-                .map(ResponseEntity::ok);
-        //.map(inventory -> ResponseEntity.status(HttpStatus.OK).body(inventory));
-    }
+        @GetMapping
+        public Flux<ResponseEntity<Inventory>> getAllInventory() {
+                return inventoryService.getAllInventory()
+                                .map(ResponseEntity::ok);
+                // .map(inventory -> ResponseEntity.status(HttpStatus.OK).body(inventory));
+        }
 
-    @GetMapping("/{id}")
-    public Mono<ResponseEntity<Inventory>> getInventoryById(@PathVariable UUID id) {
-        return inventoryService.getInventoryById(id)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+        @GetMapping("/{id}")
+        public Mono<ResponseEntity<Inventory>> getInventoryById(@PathVariable UUID id) {
+                return inventoryService.getInventoryById(id)
+                                .map(ResponseEntity::ok)
+                                .defaultIfEmpty(ResponseEntity.notFound().build());
+        }
 
-    @PostMapping
-    public Mono<ResponseEntity<Inventory>> createInventory(@RequestBody Inventory inventory) {
-        ServletUriComponentsBuilder location = ServletUriComponentsBuilder.fromCurrentRequest();
-        return inventoryService.createInventory(inventory)
-                .map(createInventory -> ResponseEntity
-                        .created(
-                                location.path("/{id}")
-                                .buildAndExpand(createInventory.getId())
-                                .toUri())
-                        .body(createInventory)
-                );
-    }
+        @PostMapping
+        public Mono<ResponseEntity<Inventory>> createInventory(
+                        @RequestBody Inventory inventory,
+                        ServerHttpRequest request) {
 
-    @PutMapping("/{id}")
-    public Mono<ResponseEntity<Inventory>> updateInventory(@PathVariable UUID id, @RequestBody Inventory inventory) {
-        return inventoryService.updateInventory(id, inventory)
-                .map(updateInventory -> ResponseEntity.ok(updateInventory))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+                return inventoryService.createInventory(inventory)
+                                .map(created -> {
+                                        String location = request.getURI().toString() + "/" + created.getId();
+                                        return ResponseEntity
+                                                        .created(java.net.URI.create(location))
+                                                        .body(created);
+                                });
+        }
 
-    @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<Inventory>> deleteInventory(@PathVariable UUID id) {
-        return inventoryService.deleteInventory(id)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+        @PutMapping("/{id}")
+        public Mono<ResponseEntity<Inventory>> updateInventory(@PathVariable UUID id,
+                        @RequestBody Inventory inventory) {
+                return inventoryService.updateInventory(id, inventory)
+                                .map(updateInventory -> ResponseEntity.ok(updateInventory))
+                                .defaultIfEmpty(ResponseEntity.notFound().build());
+        }
+
+        @DeleteMapping("/{id}")
+        public Mono<ResponseEntity<Inventory>> deleteInventory(@PathVariable UUID id) {
+                return inventoryService.deleteInventory(id)
+                                .map(ResponseEntity::ok)
+                                .defaultIfEmpty(ResponseEntity.notFound().build());
+        }
 }
