@@ -12,6 +12,6 @@ WORKDIR /app
 RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
 USER appuser
 COPY --from=builder /app/build/libs/*-SNAPSHOT.jar app.jar
-EXPOSE 8084 # Order service runs on 8084
+EXPOSE 8084
 ENTRYPOINT ["java", "-jar", "app.jar"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -f http://localhost:8084/actuator/health || exit 1
