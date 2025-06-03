@@ -44,6 +44,8 @@ public class PaymentService {
                 savedPayment.getOrderId(), savedPayment.getId());
 
         try {
+            // Simulate network delay or processing time
+            Thread.sleep(1000); 
             savedPayment.setPaymentStatus("SUCCESSFUL");
             logger.info("Payment processing simulation complete for order ID {}. Status: SUCCESSFUL",
                     savedPayment.getOrderId());
