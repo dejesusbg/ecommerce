@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: api-gateway
@@ -5,63 +8,68 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true # Enables route creation based on service discovery
-          lower-case-service-id: true # Converts service IDs to lowercase for route paths
-      default-filters: # Apply to all routes
-        - name: Retry
-          args:
-            retries: 3
-            statuses:
-              - BAD_GATEWAY
-              - SERVICE_UNAVAILABLE
-              - GATEWAY_TIMEOUT
-            methods:
-              - GET
-            backoff:
-              firstBackoff: 10ms
-              maxBackoff: 50ms
-              factor: 2
-              basedOnPreviousValue: false
-        - name: CircuitBreaker
-          args:
-            name: defaultCircuitBreaker
-            fallbackUri: forward:/fallback/default # Enabled fallback
+          enabled: true
+          lower-case-service-id: true # Optional: for consistency, e.g., product-service instead of PRODUCT-SERVICE
       routes:
         - id: product-service-route
-          uri: lb://product-service # Use service ID registered with Eureka
+          uri: lb://product-service # Eureka service ID (assuming lower-case due to above setting)
           predicates:
             - Path=/api/products/**
           filters:
-            - RewritePath=/api/products/(?<segment>.*), /$\{segment}
-
-        - id: order-service-route
-          uri: lb://order-service
-          predicates:
-            - Path=/api/orders/**
-          filters:
-            - RewritePath=/api/orders/(?<segment>.*), /$\{segment}
-
-        - id: payment-service-route
-          uri: lb://payment-service
-          predicates:
-            - Path=/api/payments/**
-          filters:
-            - RewritePath=/api/payments/(?<segment>.*), /$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: productServiceCircuitBreaker
+                fallbackUri: forward:/fallback/product-service
+            # Example of RewritePath if product-service expects /products/* instead of /api/products/*
+            # - RewritePath=/api/products/(?<segment>.*), /products/${segment}
 
         - id: inventory-service-route
           uri: lb://inventory-service
           predicates:
             - Path=/api/inventory/**
           filters:
-            - RewritePath=/api/inventory/(?<segment>.*), /$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: inventoryServiceCircuitBreaker
+                fallbackUri: forward:/fallback/inventory-service
 
-server:
-  port: 8080 # Standard port for API Gateway
+        - id: order-service-route
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/order-service
+
+        - id: payment-service-route
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: paymentServiceCircuitBreaker
+                fallbackUri: forward:/fallback/payment-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/microservices-realm/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8180/realms/microservices-realm
+          # audiences:
+          #   - account
+          #   - api-gateway-client
+  data:
+    redis:
+      host: redis # Docker service name
+      port: 6379
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/} # Get Eureka URL from env or default
+      defaultZone: http://localhost:8761/eureka/ # Placeholder
   instance:
     prefer-ip-address: true
 
@@ -69,38 +77,42 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics,configprops,env,loggers
+        include: '*'
   endpoint:
     health:
       show-details: always
-  metrics:
-    tags:
-      application: ${spring.application.name}
 
-# Resilience4J specific configurations
 resilience4j:
   circuitbreaker:
     configs:
       default:
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5 # Lowered for easier testing
-        permittedNumberOfCallsInHalfOpenState: 3
-        failureRateThreshold: 50
-        waitDurationInOpenState: 5000 # 5s
-        # slowCallRateThreshold: 100 
-        # slowCallDurationThreshold: 2000 
+        failureRateThreshold: 50 # Percentage
+        slidingWindowSize: 10 # Number of requests in a closed state
+        permittedNumberOfCallsInHalfOpenState: 5 # Number of requests in half-open state
+        waitDurationInOpenState: 10s # Duration to wait in open state
+        # registerHealthIndicator: true # To show circuit breaker status in health endpoint
     instances:
-      defaultCircuitBreaker: # Corresponds to the name used in the filter
+      productServiceCircuitBreaker:
         baseConfig: default
-      # Example per-service instance (can be defined if needed later)
-      # productServiceCircuitBreaker:
-      #   baseConfig: default
-      #   failureRateThreshold: 60
-  # Optional: Configure TimeLimiter if calls are taking too long
+      inventoryServiceCircuitBreaker:
+        baseConfig: default
+      orderServiceCircuitBreaker:
+        baseConfig: default
+      paymentServiceCircuitBreaker:
+        baseConfig: default
+  # Optional: Configure TimeLimiters if needed
   # timelimiter:
   #   configs:
   #     default:
-  #       timeoutDuration: 2s # Example: 2 seconds
+  #       timeoutDuration: 2s # Example timeout
   #   instances:
-  #     defaultTimeLimiter:
+  #     productServiceCircuitBreaker: # Can apply to the same name to combine
   #       baseConfig: default
+
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE # For debugging gateway routes and filters
+    com.example.microservices.apigateway: DEBUG # For custom filters and controllers
+    reactor.netty.http.client: DEBUG # For low-level HTTP client logging if needed
+    io.lettuce.core: DEBUG # For Redis client logging if needed
+    # io.github.resilience4j: DEBUG # For Resilience4j logging if needed
