@@ -1,17 +1,17 @@
-# Stage 1: Build the application
-FROM gradle:8.5-jdk21 AS builder
-WORKDIR /app
-COPY build.gradle settings.gradle gradlew ./
-COPY gradle ./gradle
-COPY src ./src
-RUN ./gradlew build --no-daemon -x test
+# Use a lightweight base image
+FROM openjdk:17-slim
 
-# Stage 2: Create the runtime image
-FROM eclipse-temurin:21-jre-jammy
+# Set the working directory
 WORKDIR /app
-RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
-USER appuser
-COPY --from=builder /app/build/libs/*-SNAPSHOT.jar app.jar
-EXPOSE 8084
-ENTRYPOINT ["java", "-jar", "app.jar"]
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -f http://localhost:8084/actuator/health || exit 1
+
+# Copy the compiled JAR file into the image
+ARG JAR_FILE=target/order-service-*.jar
+COPY ${JAR_FILE} app.jar
+
+# Expose the application port (Spring Boot will use a random port due to server.port=0)
+# However, for container linking or specific port mapping, you might need to define one.
+# For this example, let's assume we'll map a specific port during 'docker run' or in Docker Compose.
+# EXPOSE 8083
+
+# Set the entrypoint to run the Java application
+ENTRYPOINT ["java","-jar","/app/app.jar"]
