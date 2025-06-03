@@ -1,0 +1,35 @@
+<configuration>
+    <springProperty scope="context" name="appName" source="spring.application.name"/>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>http://loki:3100/loki/api/v1/push</url> <!-- Loki endpoint -->
+        </http>
+        <format>
+            <label>
+                <pattern>app=${appName},host=${HOSTNAME},level=%level,thread=%thread,class=%logger{36}</pattern>
+            </label>
+            <message>
+                <pattern>%msg%n%ex</pattern>
+            </message>
+        </format>
+        <!-- Optional: Batching configuration -->
+        <batchMaxItems>1000</batchMaxItems>
+        <batchMaxBytes>1048576</batchMaxBytes> <!-- 1MB -->
+        <batchTimeoutMs>1000</batchTimeoutMs>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOKI"/>
+    </root>
+
+    <!-- Example: Quieter logs for noisy packages -->
+    <logger name="org.springframework.web" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    <logger name="com.netflix.discovery" level="WARN"/> <!-- Eureka specific -->
+    <logger name="com.netflix.eureka" level="WARN"/> <!-- Eureka specific -->
+
+</configuration>
