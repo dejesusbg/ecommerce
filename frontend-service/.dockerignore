@@ -1,0 +1,20 @@
+node_modules
+.next
+.env*.local
+npm-debug.log*
+README.md
+# Add any other files or directories that should not be included in the build context
+# For example, source control files if not handled by Docker itself
+.git
+.gitignore
+# Test files if not needed in production image
+# *.test.js
+# *.spec.js
+# __tests__
+# coverage
+# Storybook files if you use it
+# .storybook
+# stories
+# Dockerfile and .dockerignore themselves if they are in context but not needed inside image
+Dockerfile
+.dockerignore

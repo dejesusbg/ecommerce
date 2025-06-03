@@ -1,0 +1,23 @@
+{
+  "appName": "Frontend del API Gateway",
+  "tokenStatus": "Estado del Token de Keycloak:",
+  "tokenFetching": "Obteniendo token...",
+  "tokenSuccess": "¡Token obtenido exitosamente!",
+  "tokenError": "Error obteniendo token:",
+  "apiCallStatus": "Estado de Llamadas API:",
+  "apiGetAllProducts": "Obtener Todos los Productos:",
+  "apiCreateProduct": "Crear Producto:",
+  "apiUpdateInventory": "Actualizar Inventario:",
+  "apiCreateOrder": "Crear Pedido:",
+  "apiProcessPayment": "Procesar Pago:",
+  "loading": "Cargando...",
+  "error": "Error:",
+  "result": "Resultado:",
+  "successData": "Éxito: (ver consola para datos)",
+  "successProductId": "Éxito: ID de Producto {{id}} (ver consola para datos)",
+  "successOrderId": "Éxito: ID de Pedido {{id}} (ver consola para datos)",
+  "pageTitle": "Inicio",
+  "welcomeMessage": "Guarda y ve tus cambios instantáneamente. Esta página ahora obtiene un token de Keycloak y realiza llamadas API.",
+  "getStarted": "Comienza editando",
+  "pending": "Pendiente..."
+}

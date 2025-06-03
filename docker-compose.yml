@@ -197,6 +197,25 @@ services:
     networks:
       - microservices-network
 
+  frontend-service:
+    build:
+      context: ./frontend-service
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" # Next.js app runs on port 3000
+    environment:
+      # This will be picked up by Next.js during runtime.
+      # The user needs to define KEYCLOAK_CLIENT_SECRET_FRONTEND in a .env file at the project root.
+      # Added a default value for when the .env var is not set, useful for initial/dev startup.
+      NEXT_PUBLIC_KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET_FRONTEND:-testClientSecret123}
+      # PORT: 3000 # This is already set in the Dockerfile ENV PORT 3000
+    restart: unless-stopped
+    networks:
+      - microservices-network
+    depends_on:
+      - api-gateway
+      - keycloak
+
   prometheus:
     image: prom/prometheus:v2.47.2
     container_name: prometheus
@@ -224,7 +243,7 @@ services:
     image: grafana/grafana:10.2.2
     container_name: grafana
     ports:
-      - '3000:3000'
+      - '3001:3000' # Changed Grafana host port to 3001
     volumes:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning
       - grafana-data:/var/lib/grafana # Persistent data
