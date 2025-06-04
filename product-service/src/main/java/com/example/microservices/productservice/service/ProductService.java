@@ -32,8 +32,8 @@ public class ProductService {
         this.inventoryServiceClient = inventoryServiceClient;
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     @Transactional
-    @CacheEvict(value = "products", key = "#product.id")
     public Product createProduct(Product product) {
         if (product.getId() == null) {
             product.setId(UUID.randomUUID().toString());
@@ -67,14 +67,14 @@ public class ProductService {
         return savedProduct;
     }
 
-    @Cacheable(value = "products") 
+    @Cacheable(value = "products")
     @Transactional(readOnly = true)
     public List<Product> getAllProducts() {
         logger.info("Fetching all products from database");
         return productRepository.findAll();
     }
 
-    @Cacheable(value = "products", key = "#id") 
+    @Cacheable(value = "products", key = "#id")
     @Transactional(readOnly = true)
     public Optional<Product> getProductById(String id) {
         logger.info("Fetching product with id: {} from database", id);
@@ -91,10 +91,10 @@ public class ProductService {
         existingProduct.setName(productDetails.getName());
         existingProduct.setDescription(productDetails.getDescription());
         existingProduct.setPrice(productDetails.getPrice());
-        return productRepository.save(existingProduct); 
+        return productRepository.save(existingProduct);
     }
 
-    @CacheEvict(value = "products", key = "#id") 
+    @CacheEvict(value = "products", key = "#id")
     @Transactional
     public void deleteProduct(String id) {
         logger.info("Deleting product with id: {}", id);
